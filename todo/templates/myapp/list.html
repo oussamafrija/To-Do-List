@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>To-Do</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #638CB8;
+        }
+        .center-column {
+            width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 3px;
+            box-shadow: 6px 2px 30px 0px rgba(0,0,0,0.75);
+        }
+        .item-row {
+            background-color: #906abd;
+            margin: 10px 0;
+            padding: 20px;
+            border-radius: 3px;
+            color: #fff;
+            font-size: 16px;
+            box-shadow: 0px -1px 10px -4px rgba(0,0,0,0.75);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="center-column">
+        <form method="POST" action="">
+            {% csrf_token %}
+            {{ form.title }}
+            <input type="submit" class="btn btn-info btn-block" value="Create task">
+        </form>
+        <div class="todo-list">
+            {% for task in tasks %}
+            <div class="item-row">
+                <div>
+                    {% if task.complete %}
+                        <p style="text-decoration: line-through;">{{ task }}</p>
+                    {% else %}
+                        <p>{{ task }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <button class="btn btn-warning" data-toggle="modal" data-target="#updateModal" data-id="{{ task.id }}" data-title="{{ task.title }}" data-complete="{{ task.complete }}">Update</button>
+                    <button class="btn btn-danger" data-toggle="modal" data-target="#deleteModal" data-id="{{ task.id }}" data-title="{{ task.title }}">Delete</button>
+                    <form method="POST" action="{% url 'update-task' task.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" name="complete" class="btn {% if task.complete %}btn-secondary{% else %}btn-success{% endif %}">
+                            {% if task.complete %}Incomplete{% else %}Complete{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Update Modal -->
+    <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" id="updateForm" action="">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="updateModalLabel">Update Task</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="task-title" class="col-form-label">Task:</label>
+                            <input type="text" class="form-control" id="task-title" name="title">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <input type="submit" class="btn btn-primary" value="Update task">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" id="deleteForm" action="">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel">Delete Task</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete the task "<span id="task-to-delete"></span>"?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <input type="submit" class="btn btn-danger" value="Confirm">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+        $('#updateModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var taskId = button.data('id');
+            var taskTitle = button.data('title');
+            var modal = $(this);
+            modal.find('.modal-body input#task-title').val(taskTitle);
+            modal.find('form#updateForm').attr('action', '{% url "update-task" 0 %}'.replace('0', taskId));
+        });
+
+        $('#deleteModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var taskId = button.data('id');
+            var taskTitle = button.data('title');
+            var modal = $(this);
+            modal.find('.modal-body #task-to-delete').text(taskTitle);
+            modal.find('form#deleteForm').attr('action', '{% url "delete-task" 0 %}'.replace('0', taskId));
+        });
+    </script>
+</body>
+</html>
